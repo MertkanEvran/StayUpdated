@@ -1,6 +1,10 @@
 from data_fetchers import ai_news
+import config
+from processors import chat_with_model
 
-links = ai_news.get_links()
-for link in links:
-    article = ai_news.get_link_context(link)
-    ai_news.append_article(article)
+def main():
+
+    ai_news.update_data()
+
+if __name__ == "__main__":
+    main()

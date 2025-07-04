@@ -128,9 +128,21 @@ def append_article(article, filename="articles.json"):
     if not data:
         logger.info("The data is empty. Returning from writing data to database")
         return
+    
+    titles = {a.get("title") for a in data}
+    if article.get("title") in titles:
+        logger.info(f"Article with title '{article.get('title')}' already exists. Skipping.")
+        return
 
     # Tekrar dosyaya yaz
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     logger.info((f"Article added. Total articles: {len(data)}"))
+
+def update_data():
+    links = get_links()
+    for link in links:
+        article = get_link_context(link)
+        append_article(article)
+

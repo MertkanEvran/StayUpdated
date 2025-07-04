@@ -17,7 +17,7 @@ headers = {
 
 
 
-def get_links():
+def get_article_links():
     links = []
     index_html = None
     try:
@@ -50,8 +50,7 @@ def get_links():
         logger.error(f"An error occured while parsing the html/nError: {e}")
         return None
 
-def get_link_context(link):
-
+def get_article_json(link):
 
     index_html = None
 
@@ -140,9 +139,9 @@ def append_article(article, filename="articles.json"):
 
     logger.info((f"Article added. Total articles: {len(data)}"))
 
-def update_data():
-    links = get_links()
+def update_articles():
+    links = get_article_links()
     for link in links:
-        article = get_link_context(link)
+        article = get_article_json(link)
         append_article(article)
 

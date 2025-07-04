@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from logger import logger
 
-def get_chat_response(prompt, apikey, model="openrouter/cypher-alpha:free"):
+def ask_to_llm(prompt, apikey, model="openrouter/cypher-alpha:free"):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {apikey}",

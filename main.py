@@ -1,10 +1,9 @@
-from data_fetchers import ai_news
+from web_scraping import news_scrapper
 import config
-from processors import chat_with_model
+from core import chat_with_model
 
 def main():
-
-    ai_news.update_data()
+    pass
 
 if __name__ == "__main__":
     main()

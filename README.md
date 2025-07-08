@@ -28,13 +28,14 @@ Bu sayede güncel gelişmeleri sürekli takip etmek, önemli haberleri kaçırma
 - `.env` dosyası oluşturulmalı ve aşağıdaki ortam değişkenleri tanımlanmalı:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/
-OLLAMA_ENDPOINT=http://localhost:11434
+MONGO_URI=mongodb://root:123456@mongo:27017/
+OLLAMA_ENDPOINT=http://host.docker.internal:11434
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=senin.email@gmail.com
 SMTP_PASS=mailşifren
 TO_EMAIL=alici.email@gmail.com
+PROJECT_DIR = projenin kurulu olduğu klasörün yolu
 
 ### Çalıştırma
     - Tek yapmanız gereken main.py dosyasını çalıştırmak. Birkaç dakika içerisinde raporunuz mailinize gönderilicektir.

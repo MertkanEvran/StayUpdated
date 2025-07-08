@@ -1,0 +1,31 @@
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+
+  scraper:
+    build: ./scraper
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
+  llm_client:
+    build: ./llm_client
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
+  mailer:
+    build: ./mailer
+    depends_on:
+      - llm_client
+    env_file:
+      - .env

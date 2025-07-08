@@ -2,3 +2,7 @@ config.py
 venv/
 logs/
 raw_data/
+__pycache__/
+*.pyc
+.env
+*.db

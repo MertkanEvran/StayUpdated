@@ -38,13 +38,22 @@ def save_report_to_mongo(report_text: str):
 
 def build_prompt(articles):
     metin = "\n\n".join(
-        f"Title: {a['title']}\Summary: {a['summary']}" for a in articles
+        f"Başlık: {a['title']}\nÖzet: {a['summary']}" for a in articles
     )
-    return f"""Aşağıdaki haberleri oku ve bana türkçe kısa bir özet çıkar:
+    return f"""
+    Aşağıdaki haberleri tamamen anla ve benim için Türkçe, akıcı, etkileyici ve sıkmayan bir özet çıkar.
 
+    - Sadece en kritik ve bilmem gereken bilgileri ver.
+    - Gereksiz detay ve tekrar olmasın.
+    - Özetleri doğal bir anlatımla, sanki siteden okuyormuşum gibi yaz.
+    - Özet madde madde olsun, her madde kısa ve net.
+    - Her madde kendi içinde tamamlayıcı, kolay anlaşılır olsun.
+    - Haberlerin ana fikrini ve önemli gelişmeleri vurgula.
+
+    Haberler:
     {metin}
 
-    Rapor net ve anlaşılır olsun. Madde madde olabilir."""
+    Lütfen özeti, dikkatlice ve özenle hazırla."""
 
 def call_ollama(prompt: str) -> str:
     payload = {

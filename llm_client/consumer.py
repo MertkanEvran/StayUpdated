@@ -2,16 +2,16 @@ from kafka import KafkaConsumer
 import json
 
 
-default_parameters = {
+llm_consumer_params = {
     "topic": "raw-news",
-    "group_id": 'my-group',
+    "group_id": 'llm-group',
     "bootstrap_servers": 'kafka:9092',
     "auto_offset_reset": 'earliest',
     "enable_auto_commit": True,
     "value_deserializer": lambda x: json.loads(x.decode('utf-8'))
 }
 
-def init_consumer(params = default_parameters):
+def init_consumer(params = llm_consumer_params):
     """
     Kafka consumer fonksiyonu.
     Mesajları dinler ve alır.

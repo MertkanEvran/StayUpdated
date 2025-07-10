@@ -3,9 +3,17 @@ import requests
 from pymongo import MongoClient
 from typing import Optional, Dict
 from datetime import datetime
+from producer import publish_message
+from consumer import init_consumer
 
 OLLAMA_URI = os.getenv("OLLAMA_URI", "http://host.docker.internal:11434")
 MONGO_URI = os.getenv("MONGO_URI")
+
+db_name = "news"
+collection_to_consume = "articles"
+collection_to_publish = "reports"
+topic_to_consume = "raw-news"
+topic_to_publish = "reports"
 
 def get_mongo_data() -> Optional[Dict]:
     if not MONGO_URI:
@@ -14,8 +22,8 @@ def get_mongo_data() -> Optional[Dict]:
     
     try:
         client = MongoClient(MONGO_URI)
-        db = client["news"]
-        collection = db["articles"]
+        db = client[db_name]
+        collection = db[collection_to_consume]
         articles = list(collection.find().sort("fetched_at", -1).limit(5))
         return articles
     
@@ -23,18 +31,16 @@ def get_mongo_data() -> Optional[Dict]:
         print(f"Error connecting to MongoDB: {e}")
         return None
     
-
 def save_report_to_mongo(report_text: str):
     client = MongoClient(MONGO_URI)  # local MongoDB bağlantısı
-    db = client["news"]
-    collection = db["reports"]
+    db = client[db_name]
+    collection = db[collection_to_publish]
     doc = {
         "report": report_text,
         "created_at": datetime.now()
     }
     result = collection.insert_one(doc)
     print(f"Rapor MongoDB'ye kaydedildi, id: {result.inserted_id}")
-
 
 def build_prompt(articles):
     metin = "\n\n".join(
@@ -67,13 +73,30 @@ def call_ollama(prompt: str) -> str:
     return data.get("response", "[Yanıt bulunamadı]")
 
 def main():
-    articles = get_mongo_data()
-    prompt = build_prompt(articles)
-    report = call_ollama(prompt)
 
-    # Dilersen burada dosyaya da yazabilirsin veya Mongo'ya ekleyebilirsin
-    save_report_to_mongo(report)
-    print("Rapor oluşturuldu ve MongoDB'ye kaydedildi.")
+    for message in init_consumer():
+        print(f"Yeni haber alındı: {message.value}")
+        article_summary = message.value.get("summary", None)
+        if article_summary is None:
+            print("Haber özeti bulunamadı, atlanıyor.")
+            continue
+
+        print("Haber özeti alındı, LLM için prompt hazırlanıyor...")
+        prompt = build_prompt(article_summary)
+        
+        print("Ollama ile rapor oluşturuluyor...")
+        report = call_ollama(prompt)
+        
+        save_report_to_mongo(report)
+        print("Rapor oluşturuldu ve MongoDB'ye kaydedildi.")
+
+        publish_message(report, topic='reports')
+        print("Rapor Kafka'ya gönderildi.")
+
+    print("Tüm haberler işlendi.")
+
+        
+    
 
 if __name__ == "__main__":
     main()

@@ -1,14 +1,31 @@
 from kafka import KafkaProducer
 import json
+import os
+from kafka.errors import NoBrokersAvailable
+import time
 
-# Producer objesi oluşturuyoruz
-producer = KafkaProducer(
-    bootstrap_servers='kafka:9092',  # Docker network’ünde kafka servisi adıyla bağlanıyoruz
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')  # Mesajı JSON'a çevirip byte’a dönüştürüyoruz
-)
+_producer = None
+
+def get_producer():
+    global _producer
+    if _producer is not None:
+        return _producer
+    
+    for _ in range(10):
+        try:
+            _producer = KafkaProducer(
+                bootstrap_servers=os.getenv("BOOTSTRAP_SERVER", "kafka:9092"),
+                value_serializer=lambda v: json.dumps(v).encode('utf-8')
+            )
+            return _producer
+        except NoBrokersAvailable:
+            print("Kafka hazır değil, bekleniyor...")
+            time.sleep(5)
+
+    raise Exception("Kafka producer oluşturulamadı.")
 
 
-def publish_message(data, topic='raw-news'):
+def publish_message(producer, data, topic=os.getenv("TOPIC_TO_PUBLISH_SCRAPER", "raw-news")):
     """
     Kafka producer fonksiyonu.
     :param data: Gönderilecek veri (dict)

@@ -5,7 +5,6 @@ from pymongo import MongoClient
 from typing import List, Optional, Dict
 import re
 
-
 URL = "https://www.artificialintelligence-news.com/artificial-intelligence-news/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -45,7 +44,6 @@ def parse_article_json(link: str) -> Optional[Dict]:
         author = author_div.find("a").text if author_div and author_div.find("a") else "Author not found"
         # Context
         context = ""
-        data_id = ""
         content_div = soup.find("div", class_="elementor-widget-theme-post-content")
         if content_div:
             print("Content div found, extracting paragraphs...")
@@ -54,22 +52,16 @@ def parse_article_json(link: str) -> Optional[Dict]:
                 context += p.get_text(strip=True) + "\n"
 
             # Data ID
-            data_id = content_div.get("data-id") if content_div else None
-            if data_id:
-                print(f"Data ID found: {data_id}")  
 
         else:
             print("Content div not found, returning None.")
             return None
         
         article = {
-            "id": data_id,
             "link": link,
             "author": author,
             "title": title,
             "summary": context.strip(),
-            "fetched_at": soup.find("time").get("datetime") if soup.find("time") else None,
-            
         }
         return article
     except Exception as e:
@@ -97,12 +89,12 @@ def fetch_article_links() -> Optional[List[str]]:
     except Exception as e:
         return None
     
-
 def is_duplicate(article: Dict, db_name: str, collection_name: str) -> bool:
+
     collection = get_mongo_collection(db_name, collection_name)
-    existing_article = collection.find_one({"id": article["id"]})
+    existing_article = collection.find_one({"link": article["link"]})
     if existing_article:
-        print(f"Duplicate found for article id: {article['id']}")
+        print(f"Duplicate found for article id: {article['link']}")
         return True
     return False
 

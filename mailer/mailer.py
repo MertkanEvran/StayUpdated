@@ -1,11 +1,7 @@
 import os
 import smtplib
 from email.message import EmailMessage
-from pymongo import MongoClient
-import json
-from bson import ObjectId
-from datetime import datetime
-from consumer import init_consumer
+import consumer
 
 # Ortam değişkenlerinden bilgileri alalım
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
@@ -13,7 +9,6 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASS = os.getenv("SMTP_PASS")
 TO_EMAIL   = os.getenv("TO_EMAIL", SMTP_USER)  # İstersen kendine yollasın
-
 
 
 def send_mail(content):
@@ -36,8 +31,8 @@ def send_mail(content):
         print("✅ Mail gönderildi:", TO_EMAIL)
 
 def main():
-
-    for message in init_consumer(topic='reports'):
+    _consumer = consumer.get_consumer()  # Kafka consumer'ı başlatılır
+    for message in _consumer:
         report = message.value
         print(f"Yeni rapor alındı: {report}")
         send_mail(report)

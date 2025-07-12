@@ -1,13 +1,12 @@
 import os
 import requests
-from pymongo import MongoClient
+import mongo
 from typing import Optional, Dict
 from datetime import datetime
 import producer
 import consumer
 
-OLLAMA_URI = os.getenv("OLLAMA_URI", "http://host.docker.internal:11434")
-MONGO_URI = os.getenv("MONGO_URI")
+OLLAMA_URI = os.getenv("OLLAMA_URI", "http://localhost:11434")
 
 db_name = os.getenv("DB_NAME", "news")  # MongoDB veritabanı adı
 collection_to_consume = "articles"
@@ -16,17 +15,6 @@ topic_to_consume = os.getenv("TOPIC_TO_CONSUME_LLM", "raw-news")  # Kafka'dan t�
 topic_to_publish = os.getenv("TOPIC_TO_PUBLISH_LLM", "reports")  # Kafka'ya göndereceğimiz topic
 
     
-def save_report_to_mongo(report_text: str):
-    client = MongoClient(MONGO_URI)  # local MongoDB bağlantısı
-    db = client[db_name]
-    collection = db[collection_to_publish]
-    doc = {
-        "report": report_text,
-        "created_at": datetime.now()
-    }
-    result = collection.insert_one(doc)
-    print(f"Rapor MongoDB'ye kaydedildi, id: {result.inserted_id}")
-
 def build_prompt(articles):
     if isinstance(articles, dict):
         articles = [articles]
@@ -61,35 +49,42 @@ def call_ollama(prompt: str) -> str:
     data = response.json()
     return data.get("response", "[Yanıt bulunamadı]")
 
+def stop_ollama():
+    try:
+        response = requests.post(f"{OLLAMA_URI}/api/stop")
+        response.raise_for_status()
+        print("Ollama durduruldu.")
+    except requests.RequestException as e:
+        print(f"Ollama durdurulurken hata oluştu: {e}")
+
+
 def main():
     _producer = producer.get_producer()  # Kafka producer'ı başlatılır
     _consumer = consumer.get_consumer()
 
     for message in _consumer:
-        article = message.value
-        print(f"Yeni haber alındı: {article}")
+        try:
+            
+            article = message.value
+            print(f"Yeni haber alındı: {article}")
 
-        if "summary" not in article or "title" not in article:
-            print("Gerekli alanlar yok, atlanıyor.")
+            if "summary" not in article or "title" not in article:
+                print("Gerekli alanlar yok, atlanıyor.")
+                continue
+
+            print("Haber özeti alındı, LLM için prompt hazırlanıyor...")
+            prompt = build_prompt(article)
+
+            print("Ollama ile rapor oluşturuluyor...")
+            report = call_ollama(prompt)
+
+            producer.publish_message(_producer, report, topic='reports')
+            print("Rapor Kafka'ya gönderildi.")
+
+            mongo.add_record_to_collection(db_name, collection_to_publish, report)
+        except Exception as e:
+            print(f"Hata oluştu: {e}")
             continue
-
-        print("Haber özeti alındı, LLM için prompt hazırlanıyor...")
-        prompt = build_prompt(article)
-
-        print("Ollama ile rapor oluşturuluyor...")
-        report = call_ollama(prompt)
-
-        producer.publish_message(_producer, report, topic='reports')
-        print("Rapor Kafka'ya gönderildi.")
-
-        save_report_to_mongo(report)
-        print("Rapor oluşturuldu ve MongoDB'ye kaydedildi.")
-
-        
-
-    print("Tüm haberler işlendi.")
-
-
 
 if __name__ == "__main__":
     main()

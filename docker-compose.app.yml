@@ -11,15 +11,15 @@ services:
     volumes:
       - ./scraper:/app
 
-  llm_client:
-    build: ./llm_client
+  ollama:
+    build: ./ollama
     depends_on:
       - kafka
       - mongodb
     env_file:
       - .env
     volumes:
-      - ./llm_client:/app
+      - ./ollama:/app
 
   mailer:
     build: ./mailer

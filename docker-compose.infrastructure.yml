@@ -13,7 +13,6 @@ services:
       - ./wait-for-it.sh:/wait-for-it.sh
     command: ["/wait-for-it.sh", "zookeeper:2181", "--", "bash", "-c", "/etc/confluent/docker/run"]
 
-
   kafka:
     image: confluentinc/cp-kafka:7.2.1
     container_name: kafka
@@ -42,6 +41,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=123456
+
 
     
 
